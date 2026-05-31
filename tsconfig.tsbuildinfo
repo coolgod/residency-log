@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/monthlytable.tsx","./src/components/yearheatmap.tsx","./src/components/yeartotals.tsx","./src/lib/aggregate.ts","./src/lib/types.ts"],"version":"5.9.3"}
