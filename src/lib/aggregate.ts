@@ -1,4 +1,4 @@
-import type { DayEntry, DayKey, MonthlyCalendarStats, ResidencyRecord, YearStats } from './types';
+import type { DayEntry, DayKey, ResidencyRecord, YearStats } from './types';
 
 export function yearOf(date: string): number {
   return Number(date.slice(0, 4));
@@ -22,6 +22,8 @@ export function groupByYear(records: ResidencyRecord[]): Map<number, ResidencyRe
 export function buildYearStats(year: number, records: ResidencyRecord[]): YearStats {
   const byDate = new Map<DayKey, DayEntry>();
   const totals: Record<string, number> = {};
+  const fractionalTotals: Record<string, number> = {};
+  const monthlyPresence: Record<string, number>[] = Array.from({ length: 12 }, () => ({}));
   const monthly: Record<string, number>[] = Array.from({ length: 12 }, () => ({}));
 
   for (const r of records) {
@@ -38,50 +40,30 @@ export function buildYearStats(year: number, records: ResidencyRecord[]): YearSt
     }
     totals[r.country] = (totals[r.country] ?? 0) + 1;
     const m = monthOf(r.date);
-    monthly[m][r.country] = (monthly[m][r.country] ?? 0) + 1;
+    monthlyPresence[m][r.country] = (monthlyPresence[m][r.country] ?? 0) + 1;
   }
 
-  const monthlyCalendar: MonthlyCalendarStats[] = Array.from({ length: 12 }, () => ({
-    pure: {},
-    crossings: 0,
-    crossingInvolvement: {},
-    presence: {},
-    totalDays: 0,
-  }));
-
   let totalCalendarDays = 0;
-  let totalCrossings = 0;
 
   for (const [date, entry] of byDate.entries()) {
     const m = monthOf(date);
-    const mCal = monthlyCalendar[m];
-    mCal.totalDays++;
     totalCalendarDays++;
-
-    if (entry.countries.length === 1) {
-      const c = entry.countries[0];
-      mCal.pure[c] = (mCal.pure[c] ?? 0) + 1;
-    } else {
-      mCal.crossings++;
-      totalCrossings++;
-      for (const c of entry.countries) {
-        mCal.crossingInvolvement[c] = (mCal.crossingInvolvement[c] ?? 0) + 1;
-      }
-    }
+    const fraction = 1 / entry.countries.length;
 
     for (const c of entry.countries) {
-      mCal.presence[c] = (mCal.presence[c] ?? 0) + 1;
+      monthly[m][c] = (monthly[m][c] ?? 0) + fraction;
+      fractionalTotals[c] = (fractionalTotals[c] ?? 0) + fraction;
     }
   }
 
   return {
     year,
     totals,
+    fractionalTotals,
     monthly,
-    monthlyCalendar,
+    monthlyPresence,
     byDate,
     totalCalendarDays,
-    totalCrossings,
   };
 }
 

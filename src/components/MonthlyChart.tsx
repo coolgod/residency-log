@@ -7,6 +7,10 @@ type Props = {
   colorMap: Record<string, string>;
 };
 
+function formatDays(val: number): string {
+  return val % 1 === 0 ? val.toString() : val.toFixed(1);
+}
+
 const VIEW_WIDTH = 760;
 const VIEW_HEIGHT = 260;
 const PAD_LEFT = 40;
@@ -27,11 +31,23 @@ export default function MonthlyChart({ stats, colorMap }: Props) {
   const gridSteps = [10, 20, 30];
   const slotWidth = PLOT_WIDTH / 12;
 
+  // Monthly sums
+  const monthlyTotals = stats.monthly.map((row) =>
+    countries.reduce((sum, c) => sum + (row[c] ?? 0), 0)
+  );
+
   const hoveredData =
     hoveredMonth !== null
       ? {
           month: MONTH_NAMES[hoveredMonth],
-          cal: stats.monthlyCalendar[hoveredMonth],
+          total: monthlyTotals[hoveredMonth],
+          items: countries
+            .filter((c) => (stats.monthly[hoveredMonth][c] ?? 0) > 0)
+            .map((c) => ({
+              country: c,
+              days: stats.monthly[hoveredMonth][c],
+              presence: stats.monthlyPresence[hoveredMonth][c] ?? stats.monthly[hoveredMonth][c],
+            })),
         }
       : null;
 
@@ -42,19 +58,6 @@ export default function MonthlyChart({ stats, colorMap }: Props) {
         className="monthly-chart-svg"
         aria-label="Days by month bar chart"
       >
-        <defs>
-          <pattern
-            id="crossing-stripe"
-            width="8"
-            height="8"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(45)"
-          >
-            <rect width="4" height="8" fill="#8b5cf6" />
-            <rect x="4" width="4" height="8" fill="#ec4899" />
-          </pattern>
-        </defs>
-
         {/* Y Grid lines */}
         {gridSteps.map((step) => {
           const y = PAD_TOP + PLOT_HEIGHT - (step / yMax) * PLOT_HEIGHT;
@@ -96,40 +99,25 @@ export default function MonthlyChart({ stats, colorMap }: Props) {
           const cx = PAD_LEFT + i * slotWidth + slotWidth / 2;
           const bx = cx - BAR_WIDTH / 2;
           const slotX = PAD_LEFT + i * slotWidth;
-          const mCal = stats.monthlyCalendar[i];
-          const totalDays = mCal.totalDays;
+          const totalDays = monthlyTotals[i];
           const isHovered = hoveredMonth === i;
 
-          // Compute stack segments
-          type Segment = { key: string; y: number; height: number; fill: string };
+          // Compute stack segments per country
+          type Segment = { country: string; y: number; height: number };
           const segments: Segment[] = [];
           let currentY = PAD_TOP + PLOT_HEIGHT;
 
-          // 1. Pure country days
           for (const c of countries) {
-            const count = mCal.pure[c] ?? 0;
+            const count = stats.monthly[i][c] ?? 0;
             if (count > 0) {
               const segHeight = (count / yMax) * PLOT_HEIGHT;
               currentY -= segHeight;
               segments.push({
-                key: c,
+                country: c,
                 y: currentY,
                 height: segHeight,
-                fill: colorMap[c],
               });
             }
-          }
-
-          // 2. Border crossing days on top
-          if (mCal.crossings > 0) {
-            const segHeight = (mCal.crossings / yMax) * PLOT_HEIGHT;
-            currentY -= segHeight;
-            segments.push({
-              key: 'crossing',
-              y: currentY,
-              height: segHeight,
-              fill: 'url(#crossing-stripe)',
-            });
           }
 
           return (
@@ -166,12 +154,12 @@ export default function MonthlyChart({ stats, colorMap }: Props) {
                 const isTop = sIdx === segments.length - 1;
                 return (
                   <rect
-                    key={seg.key}
+                    key={seg.country}
                     x={bx}
                     y={seg.y}
                     width={BAR_WIDTH}
                     height={seg.height}
-                    fill={seg.fill}
+                    fill={colorMap[seg.country]}
                     rx={isTop ? 3 : 0}
                     ry={isTop ? 3 : 0}
                     className="chart-bar-segment"
@@ -187,7 +175,7 @@ export default function MonthlyChart({ stats, colorMap }: Props) {
                   textAnchor="middle"
                   className="chart-total-label"
                 >
-                  {totalDays}
+                  {formatDays(totalDays)}
                 </text>
               )}
 
@@ -213,59 +201,37 @@ export default function MonthlyChart({ stats, colorMap }: Props) {
               <strong>
                 {hoveredData.month} {stats.year}
               </strong>
-              {hoveredData.cal.totalDays > 0 ? (
+              {hoveredData.total > 0 ? (
                 <span>
                   {' '}
-                  — <strong>{hoveredData.cal.totalDays}</strong> calendar days
+                  — <strong>{formatDays(hoveredData.total)}</strong> calendar days
                 </span>
               ) : (
                 <span className="muted"> — no records</span>
               )}
             </span>
 
-            {hoveredData.cal.totalDays > 0 && (
+            {hoveredData.items.length > 0 && (
               <div className="chart-hover-items">
-                {countries
-                  .filter((c) => (hoveredData.cal.presence[c] ?? 0) > 0)
-                  .map((c) => {
-                    const pure = hoveredData.cal.pure[c] ?? 0;
-                    const crossing = hoveredData.cal.crossingInvolvement[c] ?? 0;
-                    const presence = hoveredData.cal.presence[c] ?? 0;
-                    return (
-                      <span key={c} className="chart-hover-pill">
-                        <span
-                          className="totals-swatch"
-                          style={{ background: colorMap[c] }}
-                        />
-                        {countryName(c)}:{' '}
-                        <strong>
-                          {pure} full{crossing > 0 ? ` + ${crossing} border` : ''}
-                        </strong>
-                        {crossing > 0 && (
-                          <span className="muted"> ({presence}d presence)</span>
-                        )}
-                      </span>
-                    );
-                  })}
-
-                {hoveredData.cal.crossings > 0 && (
-                  <span className="chart-hover-pill chart-crossing-pill">
-                    <span className="totals-swatch swatch-striped" />
-                    Border Crossings: <strong>{hoveredData.cal.crossings} days</strong>
+                {hoveredData.items.map((it) => (
+                  <span key={it.country} className="chart-hover-pill">
+                    <span
+                      className="totals-swatch"
+                      style={{ background: colorMap[it.country] }}
+                    />
+                    {countryName(it.country)}: <strong>{formatDays(it.days)}d</strong>
+                    {it.presence !== it.days && (
+                      <span className="muted"> ({it.presence}d presence)</span>
+                    )}
                   </span>
-                )}
+                ))}
               </div>
             )}
           </div>
         ) : (
-          <div className="chart-hover-hint">
-            <span className="muted">
-              Hover over a month column for details. Stacked bars reflect exact calendar days.
-            </span>
-            <span className="chart-legend-crossing">
-              <span className="totals-swatch swatch-striped" /> Border Crossing days
-            </span>
-          </div>
+          <span className="muted">
+            Hover over a month column for details. Crossing days count as 0.5 days per country so totals match the calendar.
+          </span>
         )}
       </div>
     </div>
