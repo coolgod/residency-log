@@ -1,4 +1,4 @@
-import type { DayEntry, DayKey, ResidencyRecord, YearStats } from './types';
+import type { DayEntry, DayKey, MonthlyCalendarStats, ResidencyRecord, YearStats } from './types';
 
 export function yearOf(date: string): number {
   return Number(date.slice(0, 4));
@@ -41,7 +41,48 @@ export function buildYearStats(year: number, records: ResidencyRecord[]): YearSt
     monthly[m][r.country] = (monthly[m][r.country] ?? 0) + 1;
   }
 
-  return { year, totals, monthly, byDate };
+  const monthlyCalendar: MonthlyCalendarStats[] = Array.from({ length: 12 }, () => ({
+    pure: {},
+    crossings: 0,
+    crossingInvolvement: {},
+    presence: {},
+    totalDays: 0,
+  }));
+
+  let totalCalendarDays = 0;
+  let totalCrossings = 0;
+
+  for (const [date, entry] of byDate.entries()) {
+    const m = monthOf(date);
+    const mCal = monthlyCalendar[m];
+    mCal.totalDays++;
+    totalCalendarDays++;
+
+    if (entry.countries.length === 1) {
+      const c = entry.countries[0];
+      mCal.pure[c] = (mCal.pure[c] ?? 0) + 1;
+    } else {
+      mCal.crossings++;
+      totalCrossings++;
+      for (const c of entry.countries) {
+        mCal.crossingInvolvement[c] = (mCal.crossingInvolvement[c] ?? 0) + 1;
+      }
+    }
+
+    for (const c of entry.countries) {
+      mCal.presence[c] = (mCal.presence[c] ?? 0) + 1;
+    }
+  }
+
+  return {
+    year,
+    totals,
+    monthly,
+    monthlyCalendar,
+    byDate,
+    totalCalendarDays,
+    totalCrossings,
+  };
 }
 
 export function distinctCountries(records: ResidencyRecord[]): string[] {

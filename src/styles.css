@@ -352,3 +352,53 @@ body {
 .chart-hover-pill strong {
   color: var(--text);
 }
+
+.chart-hover-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.chart-legend-crossing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+
+.swatch-striped {
+  background: repeating-linear-gradient(
+    45deg,
+    #8b5cf6,
+    #8b5cf6 3px,
+    #ec4899 3px,
+    #ec4899 6px
+  );
+}
+
+.presence-tag {
+  color: #a78bfa;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.monthly-total-cell {
+  color: var(--text);
+}
+
+.monthly-footer-row td {
+  border-top: 2px solid var(--border);
+  border-bottom: none;
+  padding-top: 10px;
+}
+
+.monthly-table-hint {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
