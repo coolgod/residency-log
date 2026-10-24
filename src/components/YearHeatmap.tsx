@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { YearStats } from '../lib/types';
-import { DAY_LABELS, MONTH_NAMES, formatDate } from '../lib/aggregate';
+import { DAY_LABELS, MONTH_NAMES, countryName, formatDate } from '../lib/aggregate';
 
 const CELL = 12;
 const GAP = 2;
@@ -69,7 +69,7 @@ export default function YearHeatmap({ stats, colorMap }: Props) {
               {renderCell(x, y, countries, colorMap)}
               <title>
                 {formatDate(c.date)}
-                {countries.length ? ` — ${countries.join(', ')}` : ' — no record'}
+                {countries.length ? ` — ${countries.map(countryName).join(', ')}` : ' — no record'}
               </title>
             </g>
           );
@@ -79,10 +79,10 @@ export default function YearHeatmap({ stats, colorMap }: Props) {
         {hoveredEntry ? (
           <>
             <strong>{formatDate(hoveredEntry.date)}</strong>
-            <span> — {hoveredEntry.countries.join(', ')}</span>
+            <span> — {hoveredEntry.countries.map(countryName).join(', ')}</span>
             {hoveredEntry.notes.map((n, i) => (
               <div key={i} className="heatmap-note">
-                <span className="heatmap-note-country">{n.country}:</span> {n.note}
+                <span className="heatmap-note-country">{countryName(n.country)}:</span> {n.note}
               </div>
             ))}
           </>

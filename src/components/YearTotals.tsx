@@ -1,4 +1,5 @@
 import type { YearStats } from '../lib/types';
+import { countryName } from '../lib/aggregate';
 
 type Props = {
   stats: YearStats;
@@ -13,7 +14,7 @@ export default function YearTotals({ stats, colorMap }: Props) {
       {entries.map(([country, count]) => (
         <span key={country} className="totals-pill">
           <span className="totals-swatch" style={{ background: colorMap[country] }} />
-          <strong>{country}</strong>
+          <strong>{countryName(country)}</strong>
           <span className="totals-count">
             {count} day{count === 1 ? '' : 's'}
           </span>

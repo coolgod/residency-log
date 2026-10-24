@@ -1,5 +1,5 @@
 import type { YearStats } from '../lib/types';
-import { MONTH_NAMES } from '../lib/aggregate';
+import { MONTH_NAMES, countryName } from '../lib/aggregate';
 
 type Props = {
   stats: YearStats;
@@ -18,7 +18,7 @@ export default function MonthlyTable({ stats, colorMap }: Props) {
           {countries.map((c) => (
             <th key={c}>
               <span className="totals-swatch" style={{ background: colorMap[c] }} />
-              {c}
+              {countryName(c)}
             </th>
           ))}
         </tr>

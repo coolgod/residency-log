@@ -80,6 +80,24 @@ export function buildColorMap(countries: string[]): Record<string, string> {
   return map;
 }
 
+const COUNTRY_NAMES: Record<string, string> = {
+  US: 'United States',
+  CA: 'Canada',
+  MX: 'Mexico',
+  CN: 'China',
+};
+
+let regionNames: Intl.DisplayNames | null = null;
+try {
+  regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+} catch {
+  regionNames = null;
+}
+
+export function countryName(code: string): string {
+  return COUNTRY_NAMES[code] ?? regionNames?.of(code) ?? code;
+}
+
 export function formatDate(date: string): string {
   const d = new Date(date + 'T00:00:00Z');
   return d.toLocaleDateString('en-US', {

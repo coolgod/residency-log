@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ResidencyRecord } from './lib/types';
-import { buildColorMap, buildYearStats, distinctCountries, groupByYear } from './lib/aggregate';
+import { buildColorMap, buildYearStats, countryName, distinctCountries, groupByYear } from './lib/aggregate';
 import YearHeatmap from './components/YearHeatmap';
 import YearTotals from './components/YearTotals';
 import MonthlyTable from './components/MonthlyTable';
@@ -64,7 +64,7 @@ export default function App() {
           <p className="meta">
             {Object.entries(view.lifetimeTotals)
               .sort((a, b) => b[1] - a[1])
-              .map(([c, n]) => `${c} ${n} day${n === 1 ? '' : 's'}`)
+              .map(([c, n]) => `${countryName(c)} ${n} day${n === 1 ? '' : 's'}`)
               .join(' · ')}
           </p>
           <div className="year-nav">
@@ -109,7 +109,7 @@ function Legend({ colorMap }: { colorMap: Record<string, string> }) {
       {entries.map(([country, color]) => (
         <span key={country} className="legend-item">
           <span className="legend-swatch" style={{ background: color }} />
-          {country}
+          {countryName(country)}
         </span>
       ))}
     </div>
