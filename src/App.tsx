@@ -3,7 +3,7 @@ import type { ResidencyRecord } from './lib/types';
 import { buildColorMap, buildYearStats, countryName, distinctCountries, groupByYear } from './lib/aggregate';
 import YearHeatmap from './components/YearHeatmap';
 import YearTotals from './components/YearTotals';
-import MonthlyTable from './components/MonthlyTable';
+import MonthlySection from './components/MonthlySection';
 
 type LoadState =
   | { status: 'loading' }
@@ -93,7 +93,7 @@ export default function App() {
           <section key={current.year} className="year-section">
             <YearTotals stats={current} colorMap={view.colorMap} />
             <YearHeatmap stats={current} colorMap={view.colorMap} />
-            <MonthlyTable stats={current} colorMap={view.colorMap} />
+            <MonthlySection stats={current} colorMap={view.colorMap} />
           </section>
         </>
       )}
