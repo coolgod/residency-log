@@ -15,54 +15,56 @@ export default function MonthlyTable({ stats, colorMap }: Props) {
   if (countries.length === 0) return null;
 
   return (
-    <table className="monthly">
-      <thead>
-        <tr>
-          <th>Month</th>
-          {countries.map((c) => (
-            <th key={c}>
-              <span className="totals-swatch" style={{ background: colorMap[c] }} />
-              {countryName(c)}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {MONTH_NAMES.map((m, i) => {
-          const row = stats.monthly[i];
-          const hasAny = countries.some((c) => (row[c] ?? 0) > 0);
-          return (
-            <tr key={m} className={hasAny ? '' : 'monthly-empty'}>
-              <td>{m}</td>
-              {countries.map((c) => {
-                const val = row[c];
-                if (!val) {
+    <div className="monthly-table-wrapper">
+      <table className="monthly">
+        <thead>
+          <tr>
+            <th>Month</th>
+            {countries.map((c) => (
+              <th key={c}>
+                <span className="totals-swatch" style={{ background: colorMap[c] }} />
+                {countryName(c)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {MONTH_NAMES.map((m, i) => {
+            const row = stats.monthly[i];
+            const hasAny = countries.some((c) => (row[c] ?? 0) > 0);
+            return (
+              <tr key={m} className={hasAny ? '' : 'monthly-empty'}>
+                <td>{m}</td>
+                {countries.map((c) => {
+                  const val = row[c];
+                  if (!val) {
+                    return (
+                      <td key={c} className="monthly-count">
+                        {''}
+                      </td>
+                    );
+                  }
+                  const formatted = formatDays(val);
+                  const presence = stats.monthlyPresence[i][c] ?? val;
                   return (
-                    <td key={c} className="monthly-count">
-                      {''}
+                    <td
+                      key={c}
+                      className="monthly-count"
+                      title={
+                        presence !== val
+                          ? `${formatted} calendar days (${presence} presence days)`
+                          : `${formatted} days`
+                      }
+                    >
+                      {formatted}
                     </td>
                   );
-                }
-                const formatted = formatDays(val);
-                const presence = stats.monthlyPresence[i][c] ?? val;
-                return (
-                  <td
-                    key={c}
-                    className="monthly-count"
-                    title={
-                      presence !== val
-                        ? `${formatted} calendar days (${presence} presence days)`
-                        : `${formatted} days`
-                    }
-                  >
-                    {formatted}
-                  </td>
-                );
-              })}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

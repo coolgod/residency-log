@@ -190,6 +190,12 @@ body {
   color: var(--muted);
 }
 
+.monthly-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .monthly {
   width: 100%;
   border-collapse: collapse;
@@ -351,4 +357,44 @@ body {
 
 .chart-hover-pill strong {
   color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 14px 48px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .year-section {
+    padding: 16px 12px;
+    border-radius: 8px;
+  }
+
+  .year-nav-btn {
+    min-width: 80px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .year-nav-current {
+    font-size: 22px;
+  }
+
+  .monthly th,
+  .monthly td {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .monthly th {
+    white-space: nowrap;
+  }
+
+  .tab-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
 }
