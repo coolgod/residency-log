@@ -1,4 +1,4 @@
-import type { DayEntry, DayKey, ResidencyRecord, YearStats } from './types';
+import type { DayEntry, DayKey, EntranceRecord, ResidencyRecord, YearStats } from './types';
 
 export function yearOf(date: string): number {
   return Number(date.slice(0, 4));
@@ -19,7 +19,72 @@ export function groupByYear(records: ResidencyRecord[]): Map<number, ResidencyRe
   return out;
 }
 
-export function buildYearStats(year: number, records: ResidencyRecord[]): YearStats {
+export function calculateAllEntrances(records: ResidencyRecord[]): EntranceRecord[] {
+  const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
+  const byDate = new Map<string, string[]>();
+  for (const r of sorted) {
+    const list = byDate.get(r.date);
+    if (list) {
+      if (!list.includes(r.country)) list.push(r.country);
+    } else {
+      byDate.set(r.date, [r.country]);
+    }
+  }
+
+  const dates = Array.from(byDate.keys()).sort();
+  if (dates.length === 0) return [];
+
+  const entrances: EntranceRecord[] = [];
+  let currentState = byDate.get(dates[0])![0];
+
+  for (let i = 0; i < dates.length; i++) {
+    const d = dates[i];
+    const cs = byDate.get(d)!;
+    const hasNext = i < dates.length - 1;
+    const nextCs = hasNext ? byDate.get(dates[i + 1])! : null;
+
+    if (cs.length === 1) {
+      const c = cs[0];
+      if (c !== currentState) {
+        entrances.push({ date: d, country: c, from: currentState });
+        currentState = c;
+      }
+    } else {
+      const others = cs.filter((c) => c !== currentState);
+      for (const o of others) {
+        entrances.push({ date: d, country: o, from: currentState });
+      }
+
+      if (!hasNext) {
+        if (others.length === 1) currentState = others[0];
+      } else if (nextCs && nextCs.length === 1 && nextCs[0] === currentState) {
+        // Day trip
+        entrances.push({ date: d, country: currentState, from: others[0] });
+      } else if (nextCs && nextCs.length === 1 && nextCs[0] !== currentState) {
+        currentState = nextCs[0];
+      } else if (nextCs && nextCs.length > 1) {
+        if (!nextCs.includes(currentState) && others.length > 0) {
+          currentState = others[0];
+        } else if (
+          nextCs.length === 2 &&
+          cs.length === 2 &&
+          nextCs[0] === cs[0] &&
+          nextCs[1] === cs[1]
+        ) {
+          entrances.push({ date: d, country: currentState, from: others[0] });
+        }
+      }
+    }
+  }
+
+  return entrances;
+}
+
+export function buildYearStats(
+  year: number,
+  records: ResidencyRecord[],
+  allEntrances: EntranceRecord[] = []
+): YearStats {
   const byDate = new Map<DayKey, DayEntry>();
   const totals: Record<string, number> = {};
   const fractionalTotals: Record<string, number> = {};
@@ -56,12 +121,28 @@ export function buildYearStats(year: number, records: ResidencyRecord[]): YearSt
     }
   }
 
+  const yearEntrances = allEntrances.filter((e) => yearOf(e.date) === year);
+  const monthlyEntrances: Record<string, number>[] = Array.from({ length: 12 }, () => ({}));
+  const entranceTotals: Record<string, number> = {};
+  let totalEntrances = 0;
+
+  for (const e of yearEntrances) {
+    const m = monthOf(e.date);
+    monthlyEntrances[m][e.country] = (monthlyEntrances[m][e.country] ?? 0) + 1;
+    entranceTotals[e.country] = (entranceTotals[e.country] ?? 0) + 1;
+    totalEntrances++;
+  }
+
   return {
     year,
     totals,
     fractionalTotals,
     monthly,
     monthlyPresence,
+    entrances: yearEntrances,
+    monthlyEntrances,
+    entranceTotals,
+    totalEntrances,
     byDate,
     totalCalendarDays,
   };

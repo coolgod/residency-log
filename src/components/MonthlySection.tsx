@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { YearStats } from '../lib/types';
 import MonthlyTable from './MonthlyTable';
 import MonthlyChart from './MonthlyChart';
+import EntrancesTable from './EntrancesTable';
 
 type Props = {
   stats: YearStats;
@@ -9,7 +10,7 @@ type Props = {
 };
 
 export default function MonthlySection({ stats, colorMap }: Props) {
-  const [activeTab, setActiveTab] = useState<'table' | 'chart'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'chart' | 'entrances'>('table');
 
   return (
     <div className="monthly-section">
@@ -32,14 +33,21 @@ export default function MonthlySection({ stats, colorMap }: Props) {
         >
           Days by Month Chart
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'entrances'}
+          className={`tab-btn ${activeTab === 'entrances' ? 'active' : ''}`}
+          onClick={() => setActiveTab('entrances')}
+        >
+          Entrances by Country
+        </button>
       </div>
 
       <div className="tab-panel" role="tabpanel">
-        {activeTab === 'table' ? (
-          <MonthlyTable stats={stats} colorMap={colorMap} />
-        ) : (
-          <MonthlyChart stats={stats} colorMap={colorMap} />
-        )}
+        {activeTab === 'table' && <MonthlyTable stats={stats} colorMap={colorMap} />}
+        {activeTab === 'chart' && <MonthlyChart stats={stats} colorMap={colorMap} />}
+        {activeTab === 'entrances' && <EntrancesTable stats={stats} colorMap={colorMap} />}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ResidencyRecord } from './lib/types';
-import { buildColorMap, buildYearStats, countryName, distinctCountries, groupByYear } from './lib/aggregate';
+import { buildColorMap, buildYearStats, calculateAllEntrances, countryName, distinctCountries, groupByYear } from './lib/aggregate';
 import YearHeatmap from './components/YearHeatmap';
 import YearTotals from './components/YearTotals';
 import MonthlySection from './components/MonthlySection';
@@ -28,10 +28,11 @@ export default function App() {
   const view = useMemo(() => {
     if (state.status !== 'ready') return null;
     const sorted = [...state.records].sort((a, b) => a.date.localeCompare(b.date));
+    const allEntrances = calculateAllEntrances(sorted);
     const colorMap = buildColorMap(distinctCountries(sorted));
     const byYear = groupByYear(sorted);
     const years = Array.from(byYear.keys()).sort((a, b) => b - a);
-    const stats = years.map((y) => buildYearStats(y, byYear.get(y)!));
+    const stats = years.map((y) => buildYearStats(y, byYear.get(y)!, allEntrances));
     const lifetimeTotals: Record<string, number> = {};
     for (const s of stats) {
       for (const [country, count] of Object.entries(s.totals)) {
